@@ -1,26 +1,22 @@
-import unittest
-from reverse import reverse
+import requests
 
-class TestReverse(unittest.TestCase):
-    def test_empty_string(self):
-        self.assertEqual(reverse(""), "")
+YANDEX_GEOCODE_API_KEY = "0d997e8f-b415-4fd0-91b1-c9547916c893"
 
-    def test_single_character_string(self):
-        self.assertEqual(reverse("a"), "a")
+def find_district(address):
+    geocode_url = f"https://geocode-maps.yandex.ru/1.x/"
+    geocode_params = {
+        "geocode": address,
+        "format": "json",
+        "kind": "district",
+        "apikey": YANDEX_GEOCODE_API_KEY
+    }
+    response = requests.get(geocode_url, params=geocode_params).json()
+    try:
+        district = response['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country']['AdministrativeArea']['SubAdministrativeArea']['SubAdministrativeAreaName']
+        print(f"Район: {district}")
+    except (KeyError, IndexError):
+        print("Не удалось определить район.")
 
-    def test_palindrome_string(self):
-        self.assertEqual(reverse("radar"), "radar")
-
-    def test_non_palindrome_string(self):
-        self.assertEqual(reverse("hello"), "olleh")
-
-    def test_non_string(self):
-        with self.assertRaises(TypeError):
-            reverse(123)
-
-    def test_iterable_non_string(self):
-        with self.assertRaises(TypeError):
-            reverse([1, 2, 3])
-
-if __name__ == "__main__":
-    unittest.main()
+# Вводим адрес через пользователя
+address = input("Введите адрес (например, улица, город): ")
+find_district(address)

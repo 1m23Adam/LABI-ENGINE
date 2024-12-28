@@ -1,29 +1,52 @@
-import re
-import string
+import requests
 
-def strip_punctuation_ru(data):
-    # Получаем таблицу перевода, где все знаки пунктуации будут заменены на пробел
-    translator = str.maketrans('', '', string.punctuation)
-    # Применяем таблицу перевода к строке
-    cleaned_data = data.translate(translator)
-    # Разделяем строку на слова, используя регулярное выражение, которое учитывает последовательности пробелов
-    cleaned_data = re.sub(r'\s+', ' ', cleaned_data)
-    return cleaned_data.strip()
-
-def test_strip_punctuation_ru():
-    test_cases = [
-        ("Привет, как дела?", "Привет как дела"),
-        ("Это... тест?", "Это тест"),
-        ("Привет! Как ты?", "Привет Как ты"),
-        ("Он сказал: Привет!", "Он сказал Привет"),
-        ("Почему? Потому, что!", "Почему Потому что"),
-    ]
-
-    for data, expected in test_cases:
-        result = strip_punctuation_ru(data)
-        if result == expected:
-            print("YES")
+def find_nearest_pharmacy_overpass(latitude, longitude, radius=5000):
+    """
+    Находит ближайшую аптеку с использованием Overpass API.
+    
+    :param latitude: Широта точки
+    :param longitude: Долгота точки
+    :param radius: Радиус поиска в метрах (по умолчанию 5000 метров)
+    :return: Название аптеки и координаты
+    """
+    url = "https://overpass-api.de/api/interpreter"
+    
+    # Создаем запрос для поиска аптек в указанном радиусе
+    query = f"""
+    [out:json];
+    node["amenity"="pharmacy"](around:{radius},{latitude},{longitude});
+    out body;
+    """
+    
+    # Отправляем запрос в Overpass API
+    response = requests.get(url, data=query)
+    
+    # Проверяем успешность запроса
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Проверяем, есть ли результаты
+        if data["elements"]:
+            pharmacy = data["elements"][0]
+            name = pharmacy.get("tags", {}).get("name", "Неизвестно")  # Получаем название аптеки
+            coords = (pharmacy["lat"], pharmacy["lon"])  # Координаты аптеки
+            return name, coords
         else:
-            print("NO")
+            print("Аптеки не найдены в указанном радиусе.")
+            return None
+    else:
+        print(f"Ошибка API Overpass: {response.status_code}")
+        return None
 
-test_strip_punctuation_ru()
+# Пример использования
+if __name__ == "__main__":
+    # Заданные координаты для поиска аптек (центр Москвы)
+    latitude, longitude = 55.751244, 37.618423
+    
+    # Ищем ближайшую аптеку в радиусе 5 км
+    pharmacy = find_nearest_pharmacy_overpass(latitude, longitude, radius=5000)
+    
+    if pharmacy:
+        name, coords = pharmacy
+        print(f"Ближайшая аптека: {name}")
+        print(f"Координаты аптеки: {coords}")

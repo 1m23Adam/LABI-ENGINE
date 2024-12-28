@@ -1,32 +1,29 @@
-import re
+import requests
 
-def is_correct_mobile_phone_number_ru(number):
-    # Регулярное выражение для проверки номера телефона
-    pattern = r'^(\+7|8)\s?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}$'
+def get_yandex_satellite_image(latitude, longitude, zoom=17, size=(650, 450), filename="yandex_satellite_image.png"):
+    # Базовый URL Static API Яндекс.Карт
+    base_url = "https://static-maps.yandex.ru/1.x/"
 
-    # Проверяем номер телефона с помощью регулярного выражения
-    return bool(re.match(pattern, number))
+    # Параметры запроса
+    params = {
+        "ll": f"{longitude},{latitude}",
+        "z": zoom,
+        "size": f"{size[0]},{size[1]}",
+        "l": "sat",  # Слой спутниковых снимков
+    }
 
-def test_is_correct_mobile_phone_number_ru():
-    test_cases = [
-        ("+7(900)1234567", True),
-        ("+7 900 123 45 67", True),
-        ("8(900)1234567", True),
-        ("8 900 123-45-67", True),
-        ("89001234567", True),
-        ("+79111234567", True),
-        ("+7 911 123-45-67", True),
-        ("abc", False),                 # Некорректный формат номера
-        ("+8(900)1234567", False),     # Неправильный код страны
-        ("+7(800)123-4567", True),     # Неправильное количество цифр в номере
-    ]
+    # Запрос изображения
+    response = requests.get(base_url, params=params)
 
-    for number, expected in test_cases:
-        result = is_correct_mobile_phone_number_ru(number)
-        if result == expected:
-            print("YES")
-        else:
-            print("NO")
-            return
+    if response.status_code == 200:
+        # Сохранение изображения в файл
+        with open(filename, "wb") as file:
+            file.write(response.content)
+        print(f"Спутниковый снимок сохранен как '{filename}'.")
+    else:
+        print(f"Ошибка получения изображения: {response.status_code} - {response.text}")
 
-test_is_correct_mobile_phone_number_ru()
+# Пример использования
+latitude = 55.751244  # Координаты центра Москвы
+longitude = 37.618423
+get_yandex_satellite_image(latitude, longitude)

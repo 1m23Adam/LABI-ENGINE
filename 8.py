@@ -1,22 +1,37 @@
-import pytest
-from reverse import reverse
+import math
 
-def test_empty_string():
-    assert reverse("") == ""
+# Функция для вычисления расстояния между двумя точками по координатам
+def lonlat_distance(a, b):
+    degree_to_meters_factor = 111 * 1000  # 1 градус = 111 км = 111 000 м
+    a_lon, a_lat = a
+    b_lon, b_lat = b
 
-def test_single_character_string():
-    assert reverse("a") == "a"
+    # Берем среднюю широту и считаем коэффициент для долготы
+    radians_latitude = math.radians((a_lat + b_lat) / 2.)
+    lat_lon_factor = math.cos(radians_latitude)
 
-def test_palindrome_string():
-    assert reverse("radar") == "radar"
+    # Вычисляем смещения по долготе и широте
+    dx = abs(a_lon - b_lon) * degree_to_meters_factor * lat_lon_factor
+    dy = abs(a_lat - b_lat) * degree_to_meters_factor
 
-def test_non_palindrome_string():
-    assert reverse("hello") == "olleh"
+    # Вычисляем расстояние между точками
+    distance = math.sqrt(dx * dx + dy * dy)
+    return distance
 
-def test_non_string_non_iterable():
-    with pytest.raises(TypeError):
-        reverse(123)
+# Главная функция программы
+def main():
+    print("Введите координаты дома (долгота и широта):")
+    home_lon = float(input("Долгота: "))
+    home_lat = float(input("Широта: "))
+    
+    print("Введите координаты университета (долгота и широта):")
+    university_lon = float(input("Долгота: "))
+    university_lat = float(input("Широта: "))
+    
+    # Вычисляем расстояние между домом и университетом
+    distance = lonlat_distance((home_lon, home_lat), (university_lon, university_lat))
+    
+    print(f"Расстояние между вашим домом и университетом: {distance / 1000:.2f} км")
 
-def test_non_string_iterable():
-    with pytest.raises(TypeError):
-        reverse([1, 2, 3])
+if __name__ == "__main__":
+    main()

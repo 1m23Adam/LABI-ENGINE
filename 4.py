@@ -1,21 +1,32 @@
-import re
+from geopy.geocoders import Nominatim
 
-def is_correct_mobile_phone_ru(number):
-    # Регулярное выражение для проверки номера телефона
-    pattern = r'^(\+7|8)\s?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2,3}[\s-]?\d{2}$'
+def find_southernmost_city(cities):
+    geolocator = Nominatim(user_agent="southernmost_city_finder")
+    southernmost_city = None
+    min_latitude = float('inf')
 
-    # Проверяем номер телефона с помощью регулярного выражения
-    return bool(re.match(pattern, number))
-
-def main():
-    # Чтение строки из стандартного ввода
-    phone_number = input("Введите номер мобильного телефона: ")
-
-    # Проверка корректности номера телефона
-    if is_correct_mobile_phone_ru(phone_number):
-        print("YES")
-    else:
-        print("NO")
+    for city in cities:
+        location = geolocator.geocode(city.strip())
+        if location:
+            latitude = location.latitude
+            print(f"{city.strip()}: Широта {latitude:.6f}")
+            if latitude < min_latitude:
+                min_latitude = latitude
+                southernmost_city = city.strip()
+        else:
+            print(f"Город {city.strip()} не найден.")
+    
+    return southernmost_city
 
 if __name__ == "__main__":
-    main()
+    # Ввод списка городов
+    cities_input = input("Введите список городов через запятую: ")
+    cities_list = cities_input.split(',')
+
+    # Нахождение самого южного города
+    southernmost_city = find_southernmost_city(cities_list)
+
+    if southernmost_city:
+        print(f"Самый южный город: {southernmost_city}")
+    else:
+        print("Не удалось определить самый южный город.")
